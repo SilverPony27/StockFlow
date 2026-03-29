@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StockFlow — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & TOKENS ─────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f172a;              /* deep blue-gray background */
+  --surface:#151c2f;         /* slightly lighter panel */
+  --card:#1e293b;            /* card background */
+
+  --border:#2a344a;
+
+  --accent:#ff7a90;          /* soft pink (not too bright) */
+  --accent2:#facc15;         /* warm soft yellow */
+  --accent3:#60a5fa;         /* soft blue */
+
+  --text:#e2e8f0;            /* soft white text */
+  --muted:#94a3b8;           /* muted gray-blue */
+}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+
+/* ── LAYOUT ─────────────────────────────────────────────────────── */
+.app{display:flex;height:100vh}
+
+/* ── SIDEBAR ─────────────────────────────────────────────────────── */
+.sidebar{
+  width:var(--sidebar);min-width:var(--sidebar);
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  padding:0 0 20px;overflow:hidden;
+  position:relative;z-index:10;
+}
+.sidebar-logo{
+  padding:28px 22px 20px;
+  font-family:'Orbitron',sans-serif;font-size:22px;font-weight:800;
+  letter-spacing:-0.5px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.sidebar-logo span{font-size:11px;display:block;letter-spacing:2px;font-weight:400;opacity:.6;margin-top:2px;-webkit-text-fill-color:var(--muted);background:none}
+.nav-group{padding:16px 12px 4px;font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+.nav-btn{
+  display:flex;align-items:center;gap:12px;
+  width:100%;padding:11px 22px;
+  border:none;background:transparent;color:var(--muted);
+  font-family:'Poppins',sans-serif;font-size:14px;font-weight:500;
+  cursor:pointer;transition:.2s;text-align:left;
+  border-left:3px solid transparent;
+}
+.nav-btn:hover{color:var(--text);background:rgba(255,255,255,.04)}
+.nav-btn.active{
+  color:var(--accent);background:rgba(59,130,246,.08);
+  border-left-color:var(--accent);
+}
+.nav-btn .icon{font-size:16px;width:20px;text-align:center}
+.sidebar-footer{margin-top:auto;padding:16px 22px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
+
+/* ── MAIN ────────────────────────────────────────────────────────── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── TOPBAR ──────────────────────────────────────────────────────── */
+.topbar{
+  height:62px;min-height:62px;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;gap:16px;
+}
+.topbar-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:9px 18px;border:none;border-radius:8px;
+  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;
+  cursor:pointer;transition:.2s;white-space:nowrap;
+}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#2563eb}
+.btn-success{background:var(--accent2);color:#fff}
+.btn-success:hover{background:#059669}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{background:#dc2626}
+.btn-ghost{background:rgba(255,255,255,.06);color:var(--text)}
+.btn-ghost:hover{background:rgba(255,255,255,.1)}
+.btn-sm{padding:6px 12px;font-size:12px}
+
+/* ── CONTENT ──────────────────────────────────────────────────────── */
+.content{flex:1;overflow-y:auto;padding:28px}
+
+/* ── SECTION ─────────────────────────────────────────────────────── */
+.section{display:none}
+.section.active{display:block;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── STAT CARDS ──────────────────────────────────────────────────── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px}
+.stat-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:20px 22px;
+  position:relative;overflow:hidden;
+}
+.stat-card::before{
+  content:'';position:absolute;top:0;right:0;
+  width:60px;height:60px;border-radius:0 var(--radius) 0 60px;
+  opacity:.15;
+}
+.stat-card.blue::before{background:var(--accent)}
+.stat-card.green::before{background:var(--accent2)}
+.stat-card.amber::before{background:var(--accent3)}
+.stat-card.red::before{background:var(--danger)}
+.stat-card.purple::before{background:#8b5cf6}
+.stat-icon{font-size:22px;margin-bottom:10px}
+.stat-value{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;line-height:1}
+.stat-label{font-size:12px;color:var(--muted);margin-top:6px}
+
+/* ── TABLE ───────────────────────────────────────────────────────── */
+.table-wrapper{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.table-header{
+  padding:18px 22px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+.table-header h3{font-family:'Syne',sans-serif;font-size:15px;font-weight:700}
+.search-box{
+  position:relative;display:flex;align-items:center;
+}
+.search-box input{
+  background:var(--surface);border:1px solid var(--border);
+  color:var(--text);border-radius:8px;padding:8px 12px 8px 34px;
+  font-size:13px;width:200px;outline:none;
+}
+.search-box input::placeholder{color:var(--muted)}
+.search-box::before{content:'🔍';position:absolute;left:10px;font-size:12px}
+table{width:100%;border-collapse:collapse}
+thead th{
+  background:rgba(255,255,255,.03);
+  padding:11px 16px;text-align:left;
+  font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);
+  border-bottom:1px solid var(--border);
+}
+tbody td{padding:13px 16px;font-size:13.5px;border-bottom:1px solid rgba(255,255,255,.04)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:rgba(255,255,255,.025)}
+
+/* ── BADGES ──────────────────────────────────────────────────────── */
+.badge{
+  display:inline-block;padding:3px 10px;border-radius:20px;
+  font-size:11px;font-weight:600;letter-spacing:.3px;
+}
+.badge-green{background:rgba(16,185,129,.15);color:#10b981}
+.badge-blue{background:rgba(59,130,246,.15);color:#3b82f6}
+.badge-amber{background:rgba(245,158,11,.15);color:#f59e0b}
+.badge-red{background:rgba(239,68,68,.15);color:#ef4444}
+.badge-purple{background:rgba(139,92,246,.15);color:#8b5cf6}
+.badge-gray{background:rgba(255,255,255,.08);color:var(--muted)}
+
+/* ── MODAL ───────────────────────────────────────────────────────── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);
+  z-index:1000;display:none;align-items:center;justify-content:center;
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:18px;width:500px;max-width:95vw;
+  max-height:90vh;overflow-y:auto;
+  animation:modalIn .25s ease;
+}
+@keyframes modalIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.modal-head{
+  padding:24px 28px 18px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.modal-head h2{font-family:'Syne',sans-serif;font-size:17px;font-weight:700}
+.modal-close{
+  background:none;border:none;color:var(--muted);
+  font-size:20px;cursor:pointer;width:32px;height:32px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:6px;transition:.2s;
+}
+.modal-close:hover{background:rgba(255,255,255,.08);color:var(--text)}
+.modal-body{padding:24px 28px 28px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-grid.single{grid-template-columns:1fr}
+.form-group{display:flex;flex-direction:column;gap:7px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:12px;color:var(--muted);font-weight:500;letter-spacing:.4px}
+.form-group input,.form-group select,.form-group textarea{
+  background:var(--surface);border:1px solid var(--border);
+  color:var(--text);border-radius:8px;padding:10px 12px;
+  font-family:'DM Sans',sans-serif;font-size:14px;outline:none;
+  transition:.2s;
+}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent)}
+.form-group select option{background:var(--card)}
+.form-group textarea{resize:vertical;min-height:80px}
+.modal-actions{margin-top:24px;display:flex;gap:10px;justify-content:flex-end}
+
+/* ── EMPTY STATE ──────────────────────────────────────────────────── */
+.empty{padding:60px 20px;text-align:center;color:var(--muted)}
+.empty .empty-icon{font-size:40px;margin-bottom:12px}
+.empty p{font-size:14px}
+
+/* ── ACTION BTNS IN TABLE ──────────────────────────────────────────── */
+.action-group{display:flex;gap:6px}
+
+/* ── SECTION TOPROW ──────────────────────────────────────────────── */
+.section-toprow{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.section-toprow h2{font-family:'Syne',sans-serif;font-size:20px;font-weight:800}
+
+/* ── SCROLLBAR ────────────────────────────────────────────────────── */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ── TOAST ────────────────────────────────────────────────────────── */
+#toast{
+  position:fixed;bottom:28px;right:28px;z-index:9999;
+  background:var(--card);border:1px solid var(--border);
+  padding:14px 20px;border-radius:10px;font-size:13px;
+  box-shadow:0 8px 30px rgba(0,0,0,.4);
+  transform:translateY(80px);opacity:0;transition:.3s;
+  display:flex;align-items:center;gap:10px;max-width:320px;
+}
+#toast.show{transform:translateY(0);opacity:1}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<!-- ════════════════════════ SIDEBAR ════════════════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">StockFlow<span>OFFICE MANAGER</span></div>
+
+  <div class="nav-group">Overview</div>
+  <button class="nav-btn active" onclick="show('home')" id="nav-home">
+    <span class="icon">🏠</span> Dashboard
+  </button>
+
+  <div class="nav-group">Inventory</div>
+  <button class="nav-btn" onclick="show('products')" id="nav-products">
+    <span class="icon">📦</span> Products
+  </button>
+  <button class="nav-btn" onclick="show('orders')" id="nav-orders">
+    <span class="icon">🛒</span> Orders & Billing
+  </button>
+
+  <div class="nav-group">People</div>
+  <button class="nav-btn" onclick="show('hr')" id="nav-hr">
+    <span class="icon">👥</span> Human Resources
+  </button>
+  <button class="nav-btn" onclick="show('payments')" id="nav-payments">
+    <span class="icon">💳</span> Payroll
+  </button>
+
+  <div class="nav-group">Operations</div>
+  <button class="nav-btn" onclick="show('projects')" id="nav-projects">
+    <span class="icon">📋</span> Projects
+  </button>
+  <button class="nav-btn" onclick="show('data')" id="nav-data">
+    <span class="icon">🗄️</span> Data Assets
+  </button>
+
+  <div class="sidebar-footer">StockFlow v2.0 &nbsp;·&nbsp; © 2025</div>
+</aside>
+
+<!-- ════════════════════════ MAIN ════════════════════════ -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-title" id="page-title">Dashboard</div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost btn-sm" onclick="refreshCurrent()">⟳ Refresh</button>
+      <button class="btn btn-primary btn-sm" id="add-btn" onclick="openAddModal()" style="display:none">+ Add New</button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+  <!-- ══════════════ HOME ══════════════ -->
+  <div class="section active" id="section-home">
+    <div class="stats-grid">
+      <div class="stat-card blue">
+        <div class="stat-icon">📦</div>
+        <div class="stat-value" id="stat-products">—</div>
+        <div class="stat-label">Total Products</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon">👥</div>
+        <div class="stat-value" id="stat-employees">—</div>
+        <div class="stat-label">Employees</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-icon">📋</div>
+        <div class="stat-value" id="stat-projects">—</div>
+        <div class="stat-label">Projects</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-icon">🛒</div>
+        <div class="stat-value" id="stat-orders">—</div>
+        <div class="stat-label">Orders</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-icon">💳</div>
+        <div class="stat-value" id="stat-payments">—</div>
+        <div class="stat-label">Total Paid Out</div>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <div class="table-header"><h3>Quick Overview</h3></div>
+      <div style="padding:30px 28px;color:var(--muted);font-size:14px;line-height:1.8">
+        Welcome back! Use the sidebar to navigate between modules.<br>
+        All data is synced live with your MongoDB database.
+        <ul style="margin-top:16px;padding-left:20px;display:flex;flex-direction:column;gap:8px">
+          <li><strong style="color:var(--text)">Products</strong> — Full inventory management with stock status</li>
+          <li><strong style="color:var(--text)">Orders & Billing</strong> — Track supplier orders and invoices</li>
+          <li><strong style="color:var(--text)">Human Resources</strong> — Manage staff records</li>
+          <li><strong style="color:var(--text)">Payroll</strong> — Employee salary payments & status</li>
+          <li><strong style="color:var(--text)">Projects</strong> — Project tracking and team allocation</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ PRODUCTS ══════════════ -->
+  <div class="section" id="section-products">
+    <div class="section-toprow">
+      <h2>Products</h2>
+      <div class="search-box"><input type="text" placeholder="Search products…" oninput="filterTable('product-tbody',this.value)"></div>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Name</th><th>Category</th><th>Quantity</th><th>Price</th><th>Supplier</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="product-tbody"><tr><td colspan="7"><div class="empty"><div class="empty-icon">📦</div><p>Loading…</p></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════ ORDERS ══════════════ -->
+  <div class="section" id="section-orders">
+    <div class="section-toprow">
+      <h2>Orders & Billing</h2>
+      <div class="search-box"><input type="text" placeholder="Search orders…" oninput="filterTable('order-tbody',this.value)"></div>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Order ID</th><th>Product</th><th>Supplier</th><th>Qty</th><th>Unit Price</th><th>Total</th><th>Order Date</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="order-tbody"><tr><td colspan="9"><div class="empty"><div class="empty-icon">🛒</div><p>Loading…</p></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════ HR ══════════════ -->
+  <div class="section" id="section-hr">
+    <div class="section-toprow">
+      <h2>Human Resources</h2>
+      <div class="search-box"><input type="text" placeholder="Search employees…" oninput="filterTable('employee-tbody',this.value)"></div>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Role</th><th>Email</th><th>Salary</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="employee-tbody"><tr><td colspan="8"><div class="empty"><div class="empty-icon">👥</div><p>Loading…</p></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════ PAYMENTS ══════════════ -->
+  <div class="section" id="section-payments">
+    <div class="section-toprow">
+      <h2>Payroll & Payments</h2>
+      <div class="search-box"><input type="text" placeholder="Search payments…" oninput="filterTable('payment-tbody',this.value)"></div>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Pay ID</th><th>Employee</th><th>Department</th><th>Amount</th><th>Month</th><th>Pay Date</th><th>Method</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="payment-tbody"><tr><td colspan="9"><div class="empty"><div class="empty-icon">💳</div><p>Loading…</p></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════ PROJECTS ══════════════ -->
+  <div class="section" id="section-projects">
+    <div class="section-toprow">
+      <h2>Projects</h2>
+      <div class="search-box"><input type="text" placeholder="Search projects…" oninput="filterTable('project-tbody',this.value)"></div>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Project ID</th><th>Name</th><th>Lead</th><th>Team</th><th>Budget</th><th>Deadline</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="project-tbody"><tr><td colspan="8"><div class="empty"><div class="empty-icon">📋</div><p>Loading…</p></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════ DATA ASSETS ══════════════ -->
+  <div class="section" id="section-data">
+    <div class="section-toprow"><h2>Data Assets</h2></div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Asset ID</th><th>Name</th><th>Type</th><th>Storage</th><th>Last Updated</th></tr></thead>
+        <tbody>
+          <tr><td>DA001</td><td>Customer Database</td><td><span class="badge badge-blue">SQL Database</span></td><td>500 GB</td><td>2025-03-01</td></tr>
+          <tr><td>DA002</td><td>Product Images</td><td><span class="badge badge-amber">Cloud Storage</span></td><td>200 GB</td><td>2025-03-10</td></tr>
+          <tr><td>DA003</td><td>Sales Records</td><td><span class="badge badge-purple">Data Warehouse</span></td><td>800 GB</td><td>2025-02-28</td></tr>
+          <tr><td>DA004</td><td>HR Documents</td><td><span class="badge badge-green">File Storage</span></td><td>120 GB</td><td>2025-03-15</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ════════════════════ MODALS ════════════════════ -->
+
+<!-- Product Modal -->
+<div class="modal-overlay" id="modal-product">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modal-product-title">Add Product</h2>
+      <button class="modal-close" onclick="closeModal('modal-product')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="product-id">
+      <div class="form-grid">
+        <div class="form-group full"><label>Product Name *</label><input id="p-name" placeholder="e.g. Laptop Stand"></div>
+        <div class="form-group"><label>Category</label><input id="p-category" placeholder="e.g. Electronics"></div>
+        <div class="form-group"><label>Supplier</label><input id="p-supplier" placeholder="e.g. Acme Corp"></div>
+        <div class="form-group"><label>Quantity *</label><input id="p-quantity" type="number" min="0" placeholder="0"></div>
+        <div class="form-group"><label>Price (₹) *</label><input id="p-price" type="number" min="0" placeholder="0.00"></div>
+        <div class="form-group full"><label>Status</label>
+          <select id="p-status">
+            <option value="In Stock">In Stock</option>
+            <option value="Low Stock">Low Stock</option>
+            <option value="Out of Stock">Out of Stock</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('modal-product')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveProduct()">Save Product</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Employee Modal -->
+<div class="modal-overlay" id="modal-employee">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modal-employee-title">Add Employee</h2>
+      <button class="modal-close" onclick="closeModal('modal-employee')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="employee-id">
+      <div class="form-grid">
+        <div class="form-group"><label>Employee ID *</label><input id="e-empId" placeholder="e.g. EMP001"></div>
+        <div class="form-group"><label>Full Name *</label><input id="e-name" placeholder="e.g. Rahul Sharma"></div>
+        <div class="form-group"><label>Department *</label><input id="e-department" placeholder="e.g. Engineering"></div>
+        <div class="form-group"><label>Role *</label><input id="e-role" placeholder="e.g. Senior Developer"></div>
+        <div class="form-group"><label>Email</label><input id="e-email" type="email" placeholder="rahul@company.com"></div>
+        <div class="form-group"><label>Phone</label><input id="e-phone" placeholder="+91 9876543210"></div>
+        <div class="form-group"><label>Salary (₹)</label><input id="e-salary" type="number" min="0" placeholder="0"></div>
+        <div class="form-group"><label>Join Date</label><input id="e-joinDate" type="date"></div>
+        <div class="form-group full"><label>Status</label>
+          <select id="e-status">
+            <option value="Active">Active</option>
+            <option value="On Leave">On Leave</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('modal-employee')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveEmployee()">Save Employee</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Order Modal -->
+<div class="modal-overlay" id="modal-order">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modal-order-title">Add Order</h2>
+      <button class="modal-close" onclick="closeModal('modal-order')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="order-id">
+      <div class="form-grid">
+        <div class="form-group"><label>Order ID *</label><input id="o-orderId" placeholder="e.g. ORD001"></div>
+        <div class="form-group"><label>Product *</label><input id="o-product" placeholder="e.g. Monitor"></div>
+        <div class="form-group full"><label>Supplier *</label><input id="o-supplier" placeholder="e.g. Dell India"></div>
+        <div class="form-group"><label>Quantity *</label><input id="o-quantity" type="number" min="1" placeholder="1"></div>
+        <div class="form-group"><label>Unit Price (₹) *</label><input id="o-unitPrice" type="number" min="0" placeholder="0.00" oninput="calcTotal()"></div>
+        <div class="form-group"><label>Total (₹)</label><input id="o-total" type="number" readonly placeholder="Auto-calculated"></div>
+        <div class="form-group"><label>Order Date</label><input id="o-orderDate" type="date"></div>
+        <div class="form-group"><label>Expected Delivery</label><input id="o-deliveryDate" type="date"></div>
+        <div class="form-group full"><label>Status</label>
+          <select id="o-status">
+            <option value="Pending">Pending</option>
+            <option value="Shipped">Shipped</option>
+            <option value="Delivered">Delivered</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('modal-order')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveOrder()">Save Order</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal-overlay" id="modal-payment">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modal-payment-title">Add Payment</h2>
+      <button class="modal-close" onclick="closeModal('modal-payment')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="payment-id">
+      <div class="form-grid">
+        <div class="form-group"><label>Payment ID *</label><input id="pay-paymentId" placeholder="e.g. PAY001"></div>
+        <div class="form-group"><label>Employee ID *</label><input id="pay-empId" placeholder="e.g. EMP001"></div>
+        <div class="form-group full"><label>Employee Name *</label><input id="pay-empName" placeholder="e.g. Rahul Sharma"></div>
+        <div class="form-group"><label>Department</label><input id="pay-department" placeholder="e.g. Engineering"></div>
+        <div class="form-group"><label>Amount (₹) *</label><input id="pay-amount" type="number" min="0" placeholder="0.00"></div>
+        <div class="form-group"><label>Month *</label><input id="pay-month" placeholder="e.g. March 2025"></div>
+        <div class="form-group"><label>Pay Date</label><input id="pay-payDate" type="date"></div>
+        <div class="form-group"><label>Method</label>
+          <select id="pay-method">
+            <option value="Bank Transfer">Bank Transfer</option>
+            <option value="Cash">Cash</option>
+            <option value="Cheque">Cheque</option>
+          </select>
+        </div>
+        <div class="form-group full"><label>Status</label>
+          <select id="pay-status">
+            <option value="Pending">Pending</option>
+            <option value="Paid">Paid</option>
+            <option value="Failed">Failed</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('modal-payment')">Cancel</button>
+        <button class="btn btn-success" onclick="savePayment()">Save Payment</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Project Modal -->
+<div class="modal-overlay" id="modal-project">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modal-project-title">Add Project</h2>
+      <button class="modal-close" onclick="closeModal('modal-project')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="project-id">
+      <div class="form-grid">
+        <div class="form-group"><label>Project ID *</label><input id="pr-projectId" placeholder="e.g. PRJ001"></div>
+        <div class="form-group"><label>Project Name *</label><input id="pr-name" placeholder="e.g. ERP System"></div>
+        <div class="form-group"><label>Project Lead *</label><input id="pr-lead" placeholder="e.g. John Smith"></div>
+        <div class="form-group"><label>Team Members</label><input id="pr-teamMembers" type="number" min="1" placeholder="1"></div>
+        <div class="form-group"><label>Budget (₹)</label><input id="pr-budget" type="number" min="0" placeholder="0"></div>
+        <div class="form-group"><label>Deadline</label><input id="pr-deadline" type="date"></div>
+        <div class="form-group"><label>Status</label>
+          <select id="pr-status">
+            <option value="Planning">Planning</option>
+            <option value="Active">Active</option>
+            <option value="On Hold">On Hold</option>
+            <option value="Completed">Completed</option>
+          </select>
+        </div>
+        <div class="form-group full"><label>Description</label><textarea id="pr-description" placeholder="Brief project description…"></textarea></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('modal-project')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveProject()">Save Project</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+const API = "http://localhost:3000";
+
+// ── NAV ─────────────────────────────────────────────────────────────
+const sectionLoaders = {
+  home: loadStats, products: loadProducts, orders: loadOrders,
+  hr: loadEmployees, payments: loadPayments, projects: loadProjects, data: ()=>{}
+};
+const sectionTitles = {
+  home:'Dashboard', products:'Products', orders:'Orders & Billing',
+  hr:'Human Resources', payments:'Payroll & Payments', projects:'Projects', data:'Data Assets'
+};
+const addBtnSections = ['products','orders','hr','payments','projects'];
+
+let current = 'home';
+
+function show(sec){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('section-'+sec).classList.add('active');
+  document.getElementById('nav-'+sec)?.classList.add('active');
+  document.getElementById('page-title').textContent = sectionTitles[sec]||sec;
+  const addBtn = document.getElementById('add-btn');
+  addBtn.style.display = addBtnSections.includes(sec) ? '' : 'none';
+  current = sec;
+  sectionLoaders[sec]?.();
+}
+
+function refreshCurrent(){ sectionLoaders[current]?.(); }
+
+function openAddModal(){
+  const map = {products:'modal-product', orders:'modal-order', hr:'modal-employee', payments:'modal-payment', projects:'modal-project'};
+  const m = map[current]; if(!m) return;
+  clearModal(m); openModal(m);
+}
+
+// ── MODAL ────────────────────────────────────────────────────────────
+function openModal(id){ document.getElementById(id).classList.add('open') }
+function closeModal(id){ document.getElementById(id).classList.remove('open') }
+function clearModal(id){
+  document.getElementById(id).querySelectorAll('input,select,textarea').forEach(el=>{
+    if(el.type==='hidden') el.value='';
+    else if(el.tagName==='SELECT') el.selectedIndex=0;
+    else el.value='';
+  });
+}
+
+// ── TOAST ────────────────────────────────────────────────────────────
+function toast(msg, ok=true){
+  const t=document.getElementById('toast');
+  t.innerHTML=(ok?'✅ ':'❌ ')+msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ── FILTER ───────────────────────────────────────────────────────────
+function filterTable(tbodyId, q){
+  const rows = document.getElementById(tbodyId).querySelectorAll('tr');
+  rows.forEach(r=>{ r.style.display = r.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none'; });
+}
+
+// ── BADGE HELPERS ─────────────────────────────────────────────────────
+function statusBadge(val){
+  const map={
+    'In Stock':'badge-green','Active':'badge-green','Paid':'badge-green','Delivered':'badge-green','Completed':'badge-green',
+    'Low Stock':'badge-amber','On Leave':'badge-amber','Pending':'badge-amber','Shipped':'badge-amber','Planning':'badge-amber','On Hold':'badge-amber',
+    'Out of Stock':'badge-red','Inactive':'badge-red','Failed':'badge-red','Cancelled':'badge-red',
+  };
+  return `<span class="badge ${map[val]||'badge-gray'}">${val}</span>`;
+}
+function fmt(n){ return '₹'+Number(n||0).toLocaleString('en-IN'); }
+
+// ── STATS ────────────────────────────────────────────────────────────
+async function loadStats(){
+  try{
+    const r=await fetch(API+'/stats'); const d=await r.json();
+    document.getElementById('stat-products').textContent=d.products||0;
+    document.getElementById('stat-employees').textContent=d.employees||0;
+    document.getElementById('stat-projects').textContent=d.projects||0;
+    document.getElementById('stat-orders').textContent=d.orders||0;
+    document.getElementById('stat-payments').textContent=fmt(d.totalPayments);
+  }catch(e){ console.error(e); }
+}
+
+// ════════════════════ PRODUCTS ════════════════════
+async function loadProducts(){
+  const tb=document.getElementById('product-tbody');
+  try{
+    const r=await fetch(API+'/products'); const data=await r.json();
+    if(!data.length){ tb.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="empty-icon">📦</div><p>No products yet. Click + Add New.</p></div></td></tr>`; return; }
+    tb.innerHTML=data.map(p=>`
+      <tr>
+        <td>${p.name}</td><td>${p.category||'—'}</td><td>${p.quantity}</td>
+        <td>${fmt(p.price)}</td><td>${p.supplier||'—'}</td>
+        <td>${statusBadge(p.status)}</td>
+        <td><div class="action-group">
+          <button class="btn btn-ghost btn-sm" onclick='editProduct(${JSON.stringify(p)})'>✏️ Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p._id}')">🗑️</button>
+        </div></td>
+      </tr>`).join('');
+  }catch(e){ tb.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="empty-icon">⚠️</div><p>Cannot connect to server.</p></div></td></tr>`; }
+}
+function editProduct(p){
+  document.getElementById('product-id').value=p._id;
+  document.getElementById('p-name').value=p.name;
+  document.getElementById('p-category').value=p.category||'';
+  document.getElementById('p-quantity').value=p.quantity;
+  document.getElementById('p-price').value=p.price;
+  document.getElementById('p-supplier').value=p.supplier||'';
+  document.getElementById('p-status').value=p.status;
+  document.getElementById('modal-product-title').textContent='Edit Product';
+  openModal('modal-product');
+}
+async function saveProduct(){
+  const id=document.getElementById('product-id').value;
+  const body={
+    name:document.getElementById('p-name').value,
+    category:document.getElementById('p-category').value,
+    quantity:+document.getElementById('p-quantity').value,
+    price:+document.getElementById('p-price').value,
+    supplier:document.getElementById('p-supplier').value,
+    status:document.getElementById('p-status').value,
+  };
+  if(!body.name||body.quantity===''||body.price===''){toast('Fill required fields',false);return;}
+  const url=id?`${API}/products/${id}`:`${API}/products`;
+  const method=id?'PUT':'POST';
+  await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  closeModal('modal-product'); toast(id?'Product updated!':'Product added!'); loadProducts(); loadStats();
+}
+async function deleteProduct(id){
+  if(!confirm('Delete this product?'))return;
+  await fetch(`${API}/products/${id}`,{method:'DELETE'});
+  toast('Product deleted!'); loadProducts(); loadStats();
+}
+
+// ════════════════════ EMPLOYEES ════════════════════
+async function loadEmployees(){
+  const tb=document.getElementById('employee-tbody');
+  try{
+    const r=await fetch(API+'/employees'); const data=await r.json();
+    if(!data.length){ tb.innerHTML=`<tr><td colspan="8"><div class="empty"><div class="empty-icon">👥</div><p>No employees yet. Click + Add New.</p></div></td></tr>`; return; }
+    tb.innerHTML=data.map(e=>`
+      <tr>
+        <td>${e.empId}</td><td>${e.name}</td><td>${e.department}</td><td>${e.role}</td>
+        <td>${e.email||'—'}</td><td>${fmt(e.salary)}</td>
+        <td>${statusBadge(e.status)}</td>
+        <td><div class="action-group">
+          <button class="btn btn-ghost btn-sm" onclick='editEmployee(${JSON.stringify(e)})'>✏️ Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteEmployee('${e._id}')">🗑️</button>
+        </div></td>
+      </tr>`).join('');
+  }catch(e){ tb.innerHTML=`<tr><td colspan="8"><div class="empty"><div class="empty-icon">⚠️</div><p>Cannot connect to server.</p></div></td></tr>`; }
+}
+function editEmployee(e){
+  document.getElementById('employee-id').value=e._id;
+  ['empId','name','department','role','email','phone','salary','joinDate','status'].forEach(k=>{
+    const el=document.getElementById('e-'+k); if(el) el.value=e[k]||'';
+  });
+  document.getElementById('modal-employee-title').textContent='Edit Employee';
+  openModal('modal-employee');
+}
+async function saveEmployee(){
+  const id=document.getElementById('employee-id').value;
+  const body={
+    empId:document.getElementById('e-empId').value,
+    name:document.getElementById('e-name').value,
+    department:document.getElementById('e-department').value,
+    role:document.getElementById('e-role').value,
+    email:document.getElementById('e-email').value,
+    phone:document.getElementById('e-phone').value,
+    salary:+document.getElementById('e-salary').value,
+    joinDate:document.getElementById('e-joinDate').value,
+    status:document.getElementById('e-status').value,
+  };
+  if(!body.empId||!body.name||!body.department||!body.role){toast('Fill required fields',false);return;}
+  const url=id?`${API}/employees/${id}`:`${API}/employees`;
+  const method=id?'PUT':'POST';
+  await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  closeModal('modal-employee'); toast(id?'Employee updated!':'Employee added!'); loadEmployees(); loadStats();
+}
+async function deleteEmployee(id){
+  if(!confirm('Delete this employee?'))return;
+  await fetch(`${API}/employees/${id}`,{method:'DELETE'});
+  toast('Employee deleted!'); loadEmployees(); loadStats();
+}
+
+// ════════════════════ ORDERS ════════════════════
+function calcTotal(){
+  const qty=+document.getElementById('o-quantity').value||0;
+  const up=+document.getElementById('o-unitPrice').value||0;
+  document.getElementById('o-total').value=(qty*up)||'';
+}
+async function loadOrders(){
+  const tb=document.getElementById('order-tbody');
+  try{
+    const r=await fetch(API+'/orders'); const data=await r.json();
+    if(!data.length){ tb.innerHTML=`<tr><td colspan="9"><div class="empty"><div class="empty-icon">🛒</div><p>No orders yet. Click + Add New.</p></div></td></tr>`; return; }
+    tb.innerHTML=data.map(o=>`
+      <tr>
+        <td>${o.orderId}</td><td>${o.product}</td><td>${o.supplier}</td>
+        <td>${o.quantity}</td><td>${fmt(o.unitPrice)}</td><td>${fmt(o.total)}</td>
+        <td>${o.orderDate||'—'}</td><td>${statusBadge(o.status)}</td>
+        <td><div class="action-group">
+          <button class="btn btn-ghost btn-sm" onclick='editOrder(${JSON.stringify(o)})'>✏️ Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteOrder('${o._id}')">🗑️</button>
+        </div></td>
+      </tr>`).join('');
+  }catch(e){ tb.innerHTML=`<tr><td colspan="9"><div class="empty"><div class="empty-icon">⚠️</div><p>Cannot connect to server.</p></div></td></tr>`; }
+}
+function editOrder(o){
+  document.getElementById('order-id').value=o._id;
+  ['orderId','product','supplier','quantity','unitPrice','total','orderDate','deliveryDate','status'].forEach(k=>{
+    const el=document.getElementById('o-'+k); if(el) el.value=o[k]||'';
+  });
+  document.getElementById('modal-order-title').textContent='Edit Order';
+  openModal('modal-order');
+}
+async function saveOrder(){
+  const id=document.getElementById('order-id').value;
+  const qty=+document.getElementById('o-quantity').value;
+  const up=+document.getElementById('o-unitPrice').value;
+  const body={
+    orderId:document.getElementById('o-orderId').value,
+    product:document.getElementById('o-product').value,
+    supplier:document.getElementById('o-supplier').value,
+    quantity:qty, unitPrice:up, total:qty*up,
+    orderDate:document.getElementById('o-orderDate').value,
+    deliveryDate:document.getElementById('o-deliveryDate').value,
+    status:document.getElementById('o-status').value,
+  };
+  if(!body.orderId||!body.product||!body.supplier||!body.quantity){toast('Fill required fields',false);return;}
+  const url=id?`${API}/orders/${id}`:`${API}/orders`;
+  const method=id?'PUT':'POST';
+  await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  closeModal('modal-order'); toast(id?'Order updated!':'Order added!'); loadOrders(); loadStats();
+}
+async function deleteOrder(id){
+  if(!confirm('Delete this order?'))return;
+  await fetch(`${API}/orders/${id}`,{method:'DELETE'});
+  toast('Order deleted!'); loadOrders(); loadStats();
+}
+
+// ════════════════════ PAYMENTS ════════════════════
+async function loadPayments(){
+  const tb=document.getElementById('payment-tbody');
+  try{
+    const r=await fetch(API+'/payments'); const data=await r.json();
+    if(!data.length){ tb.innerHTML=`<tr><td colspan="9"><div class="empty"><div class="empty-icon">💳</div><p>No payments yet. Click + Add New.</p></div></td></tr>`; return; }
+    tb.innerHTML=data.map(p=>`
+      <tr>
+        <td>${p.paymentId}</td><td>${p.empName}</td><td>${p.department||'—'}</td>
+        <td>${fmt(p.amount)}</td><td>${p.month}</td><td>${p.payDate||'—'}</td>
+        <td>${p.method}</td><td>${statusBadge(p.status)}</td>
+        <td><div class="action-group">
+          <button class="btn btn-ghost btn-sm" onclick='editPayment(${JSON.stringify(p)})'>✏️ Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deletePayment('${p._id}')">🗑️</button>
+        </div></td>
+      </tr>`).join('');
+  }catch(e){ tb.innerHTML=`<tr><td colspan="9"><div class="empty"><div class="empty-icon">⚠️</div><p>Cannot connect to server.</p></div></td></tr>`; }
+}
+function editPayment(p){
+  document.getElementById('payment-id').value=p._id;
+  ['paymentId','empId','empName','department','amount','month','payDate','method','status'].forEach(k=>{
+    const el=document.getElementById('pay-'+k); if(el) el.value=p[k]||'';
+  });
+  document.getElementById('modal-payment-title').textContent='Edit Payment';
+  openModal('modal-payment');
+}
+async function savePayment(){
+  const id=document.getElementById('payment-id').value;
+  const body={
+    paymentId:document.getElementById('pay-paymentId').value,
+    empId:document.getElementById('pay-empId').value,
+    empName:document.getElementById('pay-empName').value,
+    department:document.getElementById('pay-department').value,
+    amount:+document.getElementById('pay-amount').value,
+    month:document.getElementById('pay-month').value,
+    payDate:document.getElementById('pay-payDate').value,
+    method:document.getElementById('pay-method').value,
+    status:document.getElementById('pay-status').value,
+  };
+  if(!body.paymentId||!body.empId||!body.empName||!body.amount||!body.month){toast('Fill required fields',false);return;}
+  const url=id?`${API}/payments/${id}`:`${API}/payments`;
+  const method=id?'PUT':'POST';
+  await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  closeModal('modal-payment'); toast(id?'Payment updated!':'Payment recorded!'); loadPayments(); loadStats();
+}
+async function deletePayment(id){
+  if(!confirm('Delete this payment?'))return;
+  await fetch(`${API}/payments/${id}`,{method:'DELETE'});
+  toast('Payment deleted!'); loadPayments(); loadStats();
+}
+
+// ════════════════════ PROJECTS ════════════════════
+async function loadProjects(){
+  const tb=document.getElementById('project-tbody');
+  try{
+    const r=await fetch(API+'/projects'); const data=await r.json();
+    if(!data.length){ tb.innerHTML=`<tr><td colspan="8"><div class="empty"><div class="empty-icon">📋</div><p>No projects yet. Click + Add New.</p></div></td></tr>`; return; }
+    tb.innerHTML=data.map(p=>`
+      <tr>
+        <td>${p.projectId}</td><td>${p.name}</td><td>${p.lead}</td>
+        <td>${p.teamMembers}</td><td>${fmt(p.budget)}</td>
+        <td>${p.deadline||'—'}</td><td>${statusBadge(p.status)}</td>
+        <td><div class="action-group">
+          <button class="btn btn-ghost btn-sm" onclick='editProject(${JSON.stringify(p)})'>✏️ Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteProject('${p._id}')">🗑️</button>
+        </div></td>
+      </tr>`).join('');
+  }catch(e){ tb.innerHTML=`<tr><td colspan="8"><div class="empty"><div class="empty-icon">⚠️</div><p>Cannot connect to server.</p></div></td></tr>`; }
+}
+function editProject(p){
+  document.getElementById('project-id').value=p._id;
+  ['projectId','name','lead','teamMembers','budget','deadline','status','description'].forEach(k=>{
+    const el=document.getElementById('pr-'+k); if(el) el.value=p[k]||'';
+  });
+  document.getElementById('modal-project-title').textContent='Edit Project';
+  openModal('modal-project');
+}
+async function saveProject(){
+  const id=document.getElementById('project-id').value;
+  const body={
+    projectId:document.getElementById('pr-projectId').value,
+    name:document.getElementById('pr-name').value,
+    lead:document.getElementById('pr-lead').value,
+    teamMembers:+document.getElementById('pr-teamMembers').value||1,
+    budget:+document.getElementById('pr-budget').value||0,
+    deadline:document.getElementById('pr-deadline').value,
+    status:document.getElementById('pr-status').value,
+    description:document.getElementById('pr-description').value,
+  };
+  if(!body.projectId||!body.name||!body.lead){toast('Fill required fields',false);return;}
+  const url=id?`${API}/projects/${id}`:`${API}/projects`;
+  const method=id?'PUT':'POST';
+  await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  closeModal('modal-project'); toast(id?'Project updated!':'Project added!'); loadProjects(); loadStats();
+}
+async function deleteProject(id){
+  if(!confirm('Delete this project?'))return;
+  await fetch(`${API}/projects/${id}`,{method:'DELETE'});
+  toast('Project deleted!'); loadProjects(); loadStats();
+}
+
+// close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); });
+});
+
+// init
+loadStats();
+</script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>StockFlow — Login</title>
+
+<!-- ✅ NEW FONTS -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+#bg-video {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#0f172a;
+  --surface:#151c2f;
+  --card:#1e293b;
+  --border:#2a344a;
+
+  --accent:#ff7a90;
+  --accent2:#facc15;
+  --accent3:#60a5fa;
+
+  --text:#e2e8f0;
+  --muted:#94a3b8;
+}
+
+/* ✅ FONT APPLIED */
+body{
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-family:'Poppins',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  overflow:hidden;
+}
+
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background:rgba(13,15,20,0.6);
+  z-index:0;
+}
+
+.right{
+  width:100%;
+  max-width:400px;
+  padding:40px;
+  background:rgba(28,32,48,0.6);
+  backdrop-filter:blur(10px);
+  border-radius:16px;
+  border:1px solid var(--border);
+  position:relative;
+  z-index:1;
+}
+
+.login-box h2{
+  font-family:'Orbitron',sans-serif;
+  font-size:26px;
+  font-weight:700;
+  margin-bottom:6px;
+}
+
+.login-box p{
+  font-size:14px;
+  color:var(--muted);
+  margin-bottom:36px;
+}
+
+.form-group{margin-bottom:20px}
+
+.form-group label{
+  display:block;
+  font-size:12px;
+  color:var(--muted);
+  margin-bottom:8px;
+  text-transform:uppercase;
+}
+
+.form-group input{
+  width:100%;
+  background:var(--card);
+  border:1px solid var(--border);
+  color:var(--text);
+  border-radius:10px;
+  padding:13px 16px;
+  font-family:'Poppins',sans-serif;
+}
+
+.login-btn{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;
+  font-family:'Orbitron',sans-serif;
+  font-size:16px;
+  cursor:pointer;
+}
+
+.login-btn:hover{
+  transform:translateY(-2px);
+}
+
+.hint{
+  margin-top:16px;
+  text-align:center;
+  font-size:12px;
+  color:var(--muted);
+}
+
+.error-msg{
+  color:#ef4444;
+  font-size:13px;
+  margin-top:12px;
+  display:none;
+}
+</style>
+</head>
+
+<body>
+
+<video autoplay muted loop id="bg-video">
+  <source src="rotating-squares.mp4" type="video/mp4">
+</video>
+
+<div class="right">
+  <div class="login-box">
+    <h2>Welcome back</h2>
+    <p>Sign in to your StockFlow account</p>
+
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="username" placeholder="Enter username">
+    </div>
+
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Enter password">
+    </div>
+
+    <button class="login-btn" onclick="login()">Sign In →</button>
+
+    <div class="error-msg" id="error-msg"></div>
+
+    <div class="hint">
+      Demo: Admin1 / Admin@123
+    </div>
+  </div>
+</div>
+
+<script>
+function validateUsername(u){ return /^(?=.*[A-Z])(?=.*[0-9])[A-Za-z0-9]{5,}$/.test(u); }
+function validatePassword(p){ return /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*]).{8,}$/.test(p); }
+
+function login(){
+  const u=document.getElementById('username').value.trim();
+  const p=document.getElementById('password').value;
+  const err=document.getElementById('error-msg');
+
+  if(!validateUsername(u)){
+    err.textContent='Invalid username'; err.style.display='block'; return;
+  }
+  if(!validatePassword(p)){
+    err.textContent='Invalid password'; err.style.display='block'; return;
+  }
+
+  window.location.href='dashboard.html';
+}
+</script>
+
+</body>
+</html>
